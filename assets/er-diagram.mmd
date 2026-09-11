@@ -1,0 +1,271 @@
+---
+config:
+  theme: base
+  htmlLabels: false
+  flowchart:
+    htmlLabels: false
+  themeVariables:
+    fontFamily: 'Microsoft YaHei, Arial, sans-serif'
+    primaryColor: '#edf4f8'
+    primaryTextColor: '#182b3a'
+    primaryBorderColor: '#537086'
+    lineColor: '#435f72'
+  er:
+    fontSize: 14
+    diagramPadding: 30
+---
+%% Physical foreign-key model. Exact SQL identifiers; parent on the left.
+%% Attribute comments preserve SQL types and nullability.
+%% PK/FK combinations identify shared-primary-key role extensions.
+%% Composite UNIQUE groups and CHECK predicates: docs/schema-reference.md.
+erDiagram
+    accTitle: Laboratory Database Integrity - physical ER model
+    accDescr: 22 tables, 124 columns, 22 primary keys and 38 foreign keys. Parent entities are on the left of each named relationship. SQL types and nullability appear in attribute comments.
+    direction LR
+    学院 {
+        varchar 学院编号 PK "VARCHAR(32); NOT NULL"
+        varchar 学院名称 "VARCHAR(100); NOT NULL"
+    }
+    用户 {
+        varchar 用户id PK "VARCHAR(32); NOT NULL"
+        varchar 姓名 "VARCHAR(100); NOT NULL"
+        varchar 用户状态 "VARCHAR(16); NOT NULL"
+    }
+    学生 {
+        varchar 用户id PK, FK "VARCHAR(32); NOT NULL"
+        varchar 学院编号 FK "VARCHAR(32); NOT NULL"
+    }
+    教师 {
+        varchar 用户id PK, FK "VARCHAR(32); NOT NULL"
+        varchar 学院编号 FK "VARCHAR(32); NOT NULL"
+    }
+    实验室负责人 {
+        varchar 用户id PK, FK "VARCHAR(32); NOT NULL"
+    }
+    实验室 {
+        varchar 实验室编号 PK "VARCHAR(32); NOT NULL"
+        varchar 学院编号 FK "VARCHAR(32); NOT NULL"
+        varchar 负责人用户id FK "VARCHAR(32); NOT NULL"
+        varchar 实验室名称 "VARCHAR(100); NOT NULL"
+        int 容纳人数 "INT; NOT NULL"
+        varchar 使用状态 "VARCHAR(16); NOT NULL"
+        varchar 实验室照片 "VARCHAR(512); NULL"
+    }
+    设备类别 {
+        varchar 类别码 PK "VARCHAR(32); NOT NULL"
+        varchar 类别名称 "VARCHAR(100); NOT NULL"
+    }
+    供应商 {
+        varchar 供应商编号 PK "VARCHAR(32); NOT NULL"
+        varchar 供应商名称 "VARCHAR(100); NOT NULL"
+        varchar 电话 "VARCHAR(30); NULL"
+    }
+    实验设备 {
+        varchar 设备编号 PK "VARCHAR(32); NOT NULL"
+        varchar 类别码 FK "VARCHAR(32); NOT NULL"
+        varchar 供应商编号 FK "VARCHAR(32); NOT NULL"
+        varchar 实验室编号 FK "VARCHAR(32); NOT NULL"
+        varchar 型号 "VARCHAR(100); NOT NULL"
+        varchar 规格 "VARCHAR(100); NOT NULL"
+        date 购置日期 "DATE; NOT NULL"
+        decimal 单价 "DECIMAL(12,2); NOT NULL"
+        date 保修到期日 "DATE; NOT NULL"
+        varchar 设备状态 "VARCHAR(16); NOT NULL"
+    }
+    维修人员 {
+        varchar 维修人员工号 PK "VARCHAR(32); NOT NULL"
+        varchar 姓名 "VARCHAR(100); NOT NULL"
+        varchar 电话 "VARCHAR(30); NOT NULL"
+    }
+    学期 {
+        varchar 学期编号 PK "VARCHAR(32); NOT NULL"
+        varchar 学期名称 "VARCHAR(100); NOT NULL"
+        datetime 开始时间 "DATETIME(6); NOT NULL"
+        datetime 结束时间 "DATETIME(6); NOT NULL"
+        int 初始积分 "INT; NOT NULL; DEFAULT 12"
+    }
+    课程 {
+        varchar 课程编号 PK "VARCHAR(32); NOT NULL"
+        varchar 授课教师用户id FK "VARCHAR(32); NOT NULL"
+        varchar 课程名称 "VARCHAR(100); NOT NULL"
+    }
+    预约表 {
+        varchar 预约表单号 PK "VARCHAR(32); NOT NULL"
+        varchar 实验室编号 FK "VARCHAR(32); NOT NULL"
+        varchar 用户id FK "VARCHAR(32); NOT NULL"
+        varchar 学期编号 FK "VARCHAR(32); NOT NULL"
+        varchar 课程编号 FK "VARCHAR(32); NULL"
+        varchar 审核人用户id FK "VARCHAR(32); NULL"
+        varchar 预约类型 "VARCHAR(16); NOT NULL"
+        datetime 开始时间 "DATETIME(6); NOT NULL"
+        datetime 结束时间 "DATETIME(6); NOT NULL"
+        int 人数 "INT; NOT NULL"
+        varchar 用途 "VARCHAR(100); NOT NULL"
+        varchar 预约状态 "VARCHAR(16); NOT NULL"
+        varchar 驳回原因 "VARCHAR(1000); NULL"
+    }
+    签到记录 {
+        varchar 签到记录id PK "VARCHAR(32); NOT NULL"
+        varchar 预约表单号 FK, UK "VARCHAR(32); NOT NULL"
+        varchar 签到方式 "VARCHAR(16); NOT NULL"
+        datetime 签到时间 "DATETIME(6); NOT NULL"
+        datetime 签退时间 "DATETIME(6); NULL"
+        varchar 超时备注 "VARCHAR(1000); NULL"
+    }
+    违规记录 {
+        varchar 违规id PK "VARCHAR(32); NOT NULL"
+        varchar 预约表单号 FK "VARCHAR(32); NOT NULL"
+        varchar 签到记录id FK "VARCHAR(32); NULL"
+        varchar 违规类型 "VARCHAR(16); NOT NULL"
+        int 扣分值 "INT; NOT NULL"
+        datetime 违规时间 "DATETIME(6); NOT NULL"
+    }
+    预约设备 {
+        varchar 使用记录编号 PK "VARCHAR(32); NOT NULL"
+        varchar 预约表单号 FK "VARCHAR(32); NOT NULL"
+        varchar 设备编号 FK "VARCHAR(32); NOT NULL"
+    }
+    预约变更 {
+        varchar 变更记录编号 PK "VARCHAR(32); NOT NULL"
+        varchar 预约表单号 FK "VARCHAR(32); NOT NULL"
+        varchar 操作人用户id FK "VARCHAR(32); NOT NULL"
+        varchar 变更类型 "VARCHAR(16); NOT NULL"
+        varchar 变更原因 "VARCHAR(1000); NOT NULL"
+        datetime 变更时间 "DATETIME(6); NOT NULL"
+    }
+    故障报修单 {
+        varchar 报修单ID PK "VARCHAR(32); NOT NULL"
+        varchar 设备编号 FK "VARCHAR(32); NOT NULL"
+        varchar 报修人用户id FK "VARCHAR(32); NOT NULL"
+        varchar 责任负责人用户id FK "VARCHAR(32); NOT NULL"
+        varchar 指派维修人员工号 FK "VARCHAR(32); NULL"
+        varchar 故障描述 "VARCHAR(1000); NOT NULL"
+        varchar 故障图片 "VARCHAR(512); NULL"
+        varchar 紧急程度 "VARCHAR(16); NOT NULL"
+        varchar 单据状态 "VARCHAR(16); NOT NULL"
+        datetime 报修时间 "DATETIME(6); NOT NULL"
+        datetime 计划维修时间 "DATETIME(6); NULL"
+        varchar 拒绝原因 "VARCHAR(1000); NULL"
+    }
+    执行维修 {
+        varchar 维修记录编号 PK "VARCHAR(32); NOT NULL"
+        varchar 报修单ID FK "VARCHAR(32); NOT NULL"
+        varchar 维修人员工号 FK "VARCHAR(32); NOT NULL"
+        varchar 维修内容 "VARCHAR(1000); NOT NULL"
+        datetime 开始时间 "DATETIME(6); NOT NULL"
+        datetime 完成时间 "DATETIME(6); NULL"
+        decimal 维修费用 "DECIMAL(12,2); NULL"
+        varchar 验收结果 "VARCHAR(16); NULL"
+        varchar 验收人用户id FK "VARCHAR(32); NULL"
+        datetime 验收时间 "DATETIME(6); NULL"
+    }
+    安全检查表 {
+        varchar 检查记录id PK "VARCHAR(32); NOT NULL"
+        varchar 实验室编号 FK "VARCHAR(32); NOT NULL"
+        varchar 检查人用户id FK "VARCHAR(32); NOT NULL"
+        date 检查日期 "DATE; NOT NULL"
+        varchar 水电状态 "VARCHAR(16); NOT NULL"
+        varchar 消防状态 "VARCHAR(16); NOT NULL"
+        varchar 设备状态 "VARCHAR(16); NOT NULL"
+        varchar 门窗状态 "VARCHAR(16); NOT NULL"
+        varchar 隐患记录 "VARCHAR(1000); NULL"
+        varchar 整改结果 "VARCHAR(1000); NULL"
+    }
+    借用 {
+        varchar 借用记录编号 PK "VARCHAR(32); NOT NULL"
+        varchar 经办负责人用户id FK "VARCHAR(32); NOT NULL"
+        varchar 借用人用户id FK "VARCHAR(32); NOT NULL"
+        varchar 设备编号 FK "VARCHAR(32); NOT NULL"
+        datetime 借出时间 "DATETIME(6); NOT NULL"
+        datetime 计划归还时间 "DATETIME(6); NOT NULL"
+        datetime 实际归还时间 "DATETIME(6); NULL"
+        varchar 损坏描述 "VARCHAR(1000); NULL"
+        decimal 赔偿金额 "DECIMAL(12,2); NULL"
+    }
+    设备移库记录 {
+        varchar 移库记录编号 PK "VARCHAR(32); NOT NULL"
+        varchar 设备编号 FK "VARCHAR(32); NOT NULL"
+        varchar 原实验室编号 FK "VARCHAR(32); NOT NULL"
+        varchar 目标实验室编号 FK "VARCHAR(32); NOT NULL"
+        datetime 移动时间 "DATETIME(6); NOT NULL"
+        varchar 移动原因 "VARCHAR(1000); NOT NULL"
+    }
+    %% fk_student_user: 学生 (用户id) -> 用户 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    用户 ||--o| 学生 : "fk_student_user"
+    %% fk_student_college: 学生 (学院编号) -> 学院 (学院编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    学院 ||..o{ 学生 : "fk_student_college"
+    %% fk_teacher_user: 教师 (用户id) -> 用户 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    用户 ||--o| 教师 : "fk_teacher_user"
+    %% fk_teacher_college: 教师 (学院编号) -> 学院 (学院编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    学院 ||..o{ 教师 : "fk_teacher_college"
+    %% fk_manager_teacher: 实验室负责人 (用户id) -> 教师 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    教师 ||--o| 实验室负责人 : "fk_manager_teacher"
+    %% fk_laboratory_college: 实验室 (学院编号) -> 学院 (学院编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    学院 ||..o{ 实验室 : "fk_laboratory_college"
+    %% fk_laboratory_manager: 实验室 (负责人用户id) -> 实验室负责人 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室负责人 ||..o{ 实验室 : "fk_laboratory_manager"
+    %% fk_equipment_category: 实验设备 (类别码) -> 设备类别 (类别码); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    设备类别 ||..o{ 实验设备 : "fk_equipment_category"
+    %% fk_equipment_supplier: 实验设备 (供应商编号) -> 供应商 (供应商编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    供应商 ||..o{ 实验设备 : "fk_equipment_supplier"
+    %% fk_equipment_laboratory: 实验设备 (实验室编号) -> 实验室 (实验室编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室 ||..o{ 实验设备 : "fk_equipment_laboratory"
+    %% fk_course_teacher: 课程 (授课教师用户id) -> 教师 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    教师 ||..o{ 课程 : "fk_course_teacher"
+    %% fk_reservation_laboratory: 预约表 (实验室编号) -> 实验室 (实验室编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室 ||..o{ 预约表 : "fk_reservation_laboratory"
+    %% fk_reservation_user: 预约表 (用户id) -> 用户 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    用户 ||..o{ 预约表 : "fk_reservation_user"
+    %% fk_reservation_term: 预约表 (学期编号) -> 学期 (学期编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    学期 ||..o{ 预约表 : "fk_reservation_term"
+    %% fk_reservation_course: 预约表 (课程编号) -> 课程 (课程编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    课程 |o..o{ 预约表 : "fk_reservation_course"
+    %% fk_reservation_reviewer: 预约表 (审核人用户id) -> 实验室负责人 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室负责人 |o..o{ 预约表 : "fk_reservation_reviewer"
+    %% fk_checkin_reservation: 签到记录 (预约表单号) -> 预约表 (预约表单号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    预约表 ||..o| 签到记录 : "fk_checkin_reservation"
+    %% fk_violation_reservation: 违规记录 (预约表单号) -> 预约表 (预约表单号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    预约表 ||..o{ 违规记录 : "fk_violation_reservation"
+    %% fk_violation_checkin: 违规记录 (预约表单号, 签到记录id) -> 签到记录 (预约表单号, 签到记录id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    签到记录 |o..o{ 违规记录 : "fk_violation_checkin"
+    %% fk_reservation_equipment_reservation: 预约设备 (预约表单号) -> 预约表 (预约表单号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    预约表 ||..o{ 预约设备 : "fk_reservation_equipment_reservation"
+    %% fk_reservation_equipment_device: 预约设备 (设备编号) -> 实验设备 (设备编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验设备 ||..o{ 预约设备 : "fk_reservation_equipment_device"
+    %% fk_reservation_change_reservation: 预约变更 (预约表单号) -> 预约表 (预约表单号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    预约表 ||..o{ 预约变更 : "fk_reservation_change_reservation"
+    %% fk_reservation_change_actor: 预约变更 (操作人用户id) -> 用户 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    用户 ||..o{ 预约变更 : "fk_reservation_change_actor"
+    %% fk_fault_report_equipment: 故障报修单 (设备编号) -> 实验设备 (设备编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验设备 ||..o{ 故障报修单 : "fk_fault_report_equipment"
+    %% fk_fault_report_reporter: 故障报修单 (报修人用户id) -> 用户 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    用户 ||..o{ 故障报修单 : "fk_fault_report_reporter"
+    %% fk_fault_report_manager: 故障报修单 (责任负责人用户id) -> 实验室负责人 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室负责人 ||..o{ 故障报修单 : "fk_fault_report_manager"
+    %% fk_fault_report_assignee: 故障报修单 (指派维修人员工号) -> 维修人员 (维修人员工号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    维修人员 |o..o{ 故障报修单 : "fk_fault_report_assignee"
+    %% fk_maintenance_execution_report: 执行维修 (报修单ID) -> 故障报修单 (报修单ID); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    故障报修单 ||..o{ 执行维修 : "fk_maintenance_execution_report"
+    %% fk_maintenance_execution_worker: 执行维修 (维修人员工号) -> 维修人员 (维修人员工号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    维修人员 ||..o{ 执行维修 : "fk_maintenance_execution_worker"
+    %% fk_maintenance_execution_acceptor: 执行维修 (验收人用户id) -> 用户 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    用户 |o..o{ 执行维修 : "fk_maintenance_execution_acceptor"
+    %% fk_safety_inspection_laboratory: 安全检查表 (实验室编号) -> 实验室 (实验室编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室 ||..o{ 安全检查表 : "fk_safety_inspection_laboratory"
+    %% fk_safety_inspection_inspector: 安全检查表 (检查人用户id) -> 实验室负责人 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室负责人 ||..o{ 安全检查表 : "fk_safety_inspection_inspector"
+    %% fk_loan_manager: 借用 (经办负责人用户id) -> 实验室负责人 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室负责人 ||..o{ 借用 : "fk_loan_manager"
+    %% fk_loan_borrower: 借用 (借用人用户id) -> 用户 (用户id); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    用户 ||..o{ 借用 : "fk_loan_borrower"
+    %% fk_loan_equipment: 借用 (设备编号) -> 实验设备 (设备编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验设备 ||..o{ 借用 : "fk_loan_equipment"
+    %% fk_equipment_transfer_device: 设备移库记录 (设备编号) -> 实验设备 (设备编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验设备 ||..o{ 设备移库记录 : "fk_equipment_transfer_device"
+    %% fk_equipment_transfer_source: 设备移库记录 (原实验室编号) -> 实验室 (实验室编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室 ||..o{ 设备移库记录 : "fk_equipment_transfer_source"
+    %% fk_equipment_transfer_target: 设备移库记录 (目标实验室编号) -> 实验室 (实验室编号); ON UPDATE RESTRICT; ON DELETE RESTRICT
+    实验室 ||..o{ 设备移库记录 : "fk_equipment_transfer_target"
+
+
+

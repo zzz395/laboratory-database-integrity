@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validation:
+    name: Python ${{ matrix.python-version }} / MySQL 8.4.11
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify Python
+        run: python --version
+
+      - name: Install locked dependencies and project
+        run: |
+          python -m pip install -r requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e .
+
+      - name: Verify dependency health
+        run: python -m pip check
+
+      - name: Verify package build
+        run: python -m pip wheel . --no-deps --no-build-isolation --wheel-dir "$RUNNER_TEMP/wheel"
+
+      - name: Generate ephemeral database credentials
+        shell: bash
+        run: |
+          umask 077
+          root_password="$(openssl rand -hex 24)"
+          runtime_password="$(openssl rand -hex 24)"
+          transfer_password="$(openssl rand -hex 24)"
+          test_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$root_password"
+          echo "::add-mask::$runtime_password"
+          echo "::add-mask::$transfer_password"
+          echo "::add-mask::$test_password"
+          {
+            echo "MYSQL_ROOT_PASSWORD=$root_password"
+            echo "LABDB_PASSWORD=$runtime_password"
+            echo "LABDB_TRANSFER_PASSWORD=$transfer_password"
+            echo "LABDB_TEST_PASSWORD=$test_password"
+          } >> "$GITHUB_ENV"
+
+      - name: Start MySQL 8.4.11
+        run: |
+          docker run --detach --name labdb-mysql84-ci \
+            --publish 127.0.0.1:33087:3306 \
+            --env MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
+            mysql:8.4.11@sha256:3466ba4a4828aa8d46fb7c3bc16b67b781c98413cf4ea0fac6feaa6e881faa26
+          for attempt in $(seq 1 90); do
+            if docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" labdb-mysql84-ci \
+              mysql --user=root --batch --skip-column-names --execute='SELECT 1;' \
+              > /dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs labdb-mysql84-ci
+          exit 1
+
+      - name: Verify MySQL version
+        run: |
+          version="$(docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" labdb-mysql84-ci \
+            mysql --user=root --batch --skip-column-names --execute='SELECT VERSION();')"
+          test "$version" = "8.4.11"
+          echo "MySQL version verified: $version"
+
+      - name: Prepare integration databases and scoped users
+        shell: bash
+        run: |
+          docker exec -i -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" labdb-mysql84-ci \
+            mysql --user=root <<SQL
+          CREATE DATABASE labdb_ci CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs;
+          CREATE DATABASE labdb_ci_smoke CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs;
+          CREATE USER 'labdb_ci_runtime'@'%' IDENTIFIED BY '${LABDB_PASSWORD}';
+          CREATE USER 'labdb_ci_transfer'@'%' IDENTIFIED BY '${LABDB_TRANSFER_PASSWORD}';
+          CREATE USER 'labdb_ci_test'@'%' IDENTIFIED BY '${LABDB_TEST_PASSWORD}';
+          GRANT CREATE, REFERENCES, INDEX, SELECT, INSERT, UPDATE ON labdb_ci.* TO 'labdb_ci_runtime'@'%';
+          GRANT CREATE, REFERENCES, INDEX, SELECT, INSERT, UPDATE ON labdb_ci_smoke.* TO 'labdb_ci_runtime'@'%';
+          GRANT SELECT, INSERT, UPDATE ON labdb_ci.* TO 'labdb_ci_transfer'@'%';
+          GRANT SELECT, INSERT, UPDATE ON labdb_ci.* TO 'labdb_ci_test'@'%';
+          SQL
+
+      - name: Compile sources and tests
+        run: python -m compileall -q src tests
+
+      - name: Run CLI help smoke
+        run: |
+          python -m labdb.cli --help
+          labdb --help
+
+      - name: Run full test suite with integration and zero-skip enforcement
+        env:
+          LABDB_HOST: 127.0.0.1
+          LABDB_PORT: "33087"
+          LABDB_USER: labdb_ci_runtime
+          LABDB_DATABASE: labdb_ci
+          LABDB_RUN_INTEGRATION: "1"
+          LABDB_TRANSFER_USER: labdb_ci_transfer
+          LABDB_TEST_USER: labdb_ci_test
+        run: python -m pytest -q -p no:cacheprovider --fail-on-skip
+
+      - name: Run CLI database smoke
+        env:
+          LABDB_HOST: 127.0.0.1
+          LABDB_PORT: "33087"
+          LABDB_USER: labdb_ci_runtime
+          LABDB_DATABASE: labdb_ci_smoke
+        run: |
+          python -m labdb.cli init
+          python -m labdb.cli seed
+          python -m labdb.cli verify
+          python -m labdb.cli transfer \
+            --transfer-id CI_SMOKE_MOVE_01 \
+            --equipment-id EQ_TEST_02 \
+            --source-lab-id LAB_TEST_A1 \
+            --target-lab-id LAB_TEST_A2 \
+            --reason "synthetic CI smoke transfer"
+          python -m labdb.cli verify
