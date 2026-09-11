@@ -14,7 +14,7 @@ Python 3.12 is the primary validated runtime. Python 3.13 is a validated compati
 
 These results were validated locally on 2026-09-11. The documentation rerun used the existing validated Python 3.12.10 environment, a fresh isolated MySQL 8.4.11 instance, the complete suite with `--fail-on-skip`, and an independent CLI smoke database. No tests or business semantics were changed for documentation acceptance. Python 3.13.5 and clean-install/build results refer to the accepted local CI-equivalent runs, not a new compatibility run during documentation review.
 
-**Local CI-equivalent: PASS. Hosted GitHub Actions has not yet been executed.** There is no hosted-CI pass claim or badge.
+**Local CI-equivalent: PASS. Hosted GitHub Actions validation has been executed successfully.** No status badge is included; verify the latest relevant hosted validation in GitHub Actions when performing release or publication acceptance.
 
 ## Coverage matrix
 
@@ -102,4 +102,4 @@ For database smoke, point `LABDB_DATABASE` at its separate empty database and ex
 
 The workflow is configured for `push` and `pull_request` on `ubuntu-24.04`, with Python 3.12/3.13 and `mysql:8.4.11@sha256:3466ba4a4828aa8d46fb7c3bc16b67b781c98413cf4ea0fac6feaa6e881faa26`. Credentials are generated ephemerally and masked. The full suite uses `--fail-on-skip`, then CLI smoke runs against a different database.
 
-The local validation results above are available; hosted execution remains pending. **Hosted GitHub Actions has not yet been executed.**
+The local validation results above are available, and hosted GitHub Actions validation has been executed successfully for the configured Python/MySQL matrix. Verify the latest relevant hosted validation in GitHub Actions when performing release or publication acceptance.

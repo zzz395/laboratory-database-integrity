@@ -12,7 +12,7 @@ Reservations have explicit intervals, but the project does not prevent all booki
 
 Python 3.12 is the primary validated runtime. Python 3.13 is a validated compatibility target. Exact tested versions are Python 3.12.10, Python 3.13.5 and MySQL 8.4.11. Package metadata allows Python 3.12/3.13; this is not a guarantee for every patch release or all Python 3.x versions. No compatibility result is claimed for other MySQL versions or database engines.
 
-The 120-test suite and local CI-equivalent checks cover behaviors listed in [testing.md](testing.md). They are not a performance benchmark, scale test or general proof of correctness. Hosted GitHub Actions has not yet been executed. Its Ubuntu matrix is configured, but a hosted execution result is not available.
+The 120-test suite and local CI-equivalent checks cover behaviors listed in [testing.md](testing.md). They are not a performance benchmark, scale test or general proof of correctness. Hosted GitHub Actions validation has been executed successfully for the configured Ubuntu Python/MySQL matrix. Verify the latest relevant hosted validation in GitHub Actions when performing release or publication acceptance.
 
 The seed is a compact set of 68 deterministic synthetic rows. It exercises selected scenarios rather than representing real institutional records, operational volume or a production distribution.
 

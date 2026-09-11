@@ -64,7 +64,7 @@ The full test suite has been validated with **120 collected, 120 passed, 0 faile
 
 Python 3.12 is the primary validated runtime. Python 3.13 is a validated compatibility target.
 
-The [GitHub Actions workflow](.github/workflows/ci.yml) defines a Python 3.12/3.13 matrix and enforces zero skips. **Hosted GitHub Actions has not yet been executed.** See [testing and reproduction](docs/testing.md) for coverage, database preparation and evidence scope.
+The [GitHub Actions workflow](.github/workflows/ci.yml) defines a Python 3.12/3.13 matrix and enforces zero skips. **Hosted GitHub Actions validation has been executed successfully for this project.** Verify the latest relevant hosted validation in GitHub Actions when performing release or publication acceptance. See [testing and reproduction](docs/testing.md) for coverage, database preparation and evidence scope.
 
 ## Project structure
 
